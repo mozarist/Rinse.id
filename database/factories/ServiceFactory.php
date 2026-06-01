@@ -17,9 +17,19 @@ class ServiceFactory extends Factory
      */
     public function definition(): array
     {
+        $serviceNames = [
+            'Cuci Lipat',
+            'Dry Cleaning',
+            'Cuci Sepatu',
+            'Setrika Saja',
+            'Cuci Bed Cover',
+            'Cuci Jaket Kulit',
+            'Laundry kilat',
+        ];
+
         return [
-            'service_name' => $this->faker->word(),
-            'price' => $this->faker->numberBetween(10000, 500000),
+            'service_name' => fake()->randomElement($serviceNames),
+            'price' => $this->faker->numberBetween(15000, 60000),
             'unit' => $this->faker->randomElement(['kg', 'pcs']),
         ];
     }

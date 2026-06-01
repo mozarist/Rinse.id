@@ -20,8 +20,8 @@ class CustomerFactory extends Factory
     {
         return [
             'user_id' => User::factory(),
-            'phone' => $this->faker->phoneNumber(),
-            'address' => $this->faker->address(),
+            'phone' => fake('id_ID')->numerify('08##-####-####'),
+            'address' => fake('id_ID')->address(),
         ];
     }
 }
