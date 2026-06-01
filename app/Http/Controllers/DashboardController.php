@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\Service;
 use App\Models\Transactions;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonPeriod;
@@ -37,6 +38,8 @@ class DashboardController extends Controller
             ],
             'recentTransactions' => $recentTransactions,
             'revenueChart' => $this->buildRevenueChart($paidTransactions),
+            'customers' => Customer::select('id', 'user_id')->with('user:id,name')->get(),
+            'services' => Service::select('id', 'service_name', 'price', 'unit')->get(),
         ]);
     }
 

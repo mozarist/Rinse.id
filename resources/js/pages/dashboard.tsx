@@ -1,6 +1,7 @@
 import * as React from 'react';
-import { Head } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 import { dashboard } from '@/routes';
+import { store } from '@/routes/transactions';
 import {
     Card,
     CardContent,
@@ -33,6 +34,11 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from 'recharts';
+import { Button } from '@/components/ui/button';
+import { Sheet, SheetTrigger } from '@/components/ui/sheet';
+import { CirclePlus } from 'lucide-react';
+import { toast } from 'sonner';
+import TransactionSheet from '@/components/ui/sheets/TransactionSheet';
 
 type Transaction = {
     id: number;
@@ -72,6 +78,29 @@ type RevenueChart = {
     data: RevenueChartPoint[];
 };
 
+type CustomerOption = {
+    id: number;
+    user: {
+        id: number;
+        name: string | null;
+    };
+};
+
+type ServiceOption = {
+    id: number;
+    service_name: string | null;
+    price: number;
+    unit: string | null;
+};
+
+type TransactionFormData = {
+    customer_id: number | '';
+    service_id: number | '';
+    quantity: number;
+    payment_method: string;
+    payment_status: string;
+};
+
 type DashboardProps = {
     summary: {
         totalTransactions: number;
@@ -81,6 +110,8 @@ type DashboardProps = {
     };
     recentTransactions: Transaction[];
     revenueChart: RevenueChart;
+    customers: CustomerOption[];
+    services: ServiceOption[];
 };
 
 const statusColors: { [key: string]: string } = {
@@ -275,17 +306,67 @@ function TransactionTable({
     description,
     emptyState,
     transactions,
+    customers,
+    services,
 }: {
     title: string;
     description: string;
     emptyState: string;
     transactions: Transaction[];
+    customers: CustomerOption[];
+    services: ServiceOption[];
 }) {
+    const [open, setOpen] = React.useState(false);
+    const createForm = useForm<TransactionFormData>({
+        customer_id: '',
+        service_id: '',
+        quantity: 0,
+        payment_method: '',
+        payment_status: 'pending',
+    });
+
+    function handleCreateSubmit(e: React.FormEvent) {
+        e.preventDefault();
+
+        createForm.post(store.url(), {
+            onSuccess: () => {
+                toast.success('Transaction successfully created.');
+                createForm.reset();
+                setOpen(false);
+            },
+            onError: () => {
+                toast.error(
+                    'Failed to create transaction. Please check the form and try again.',
+                );
+            },
+        });
+    }
+
     return (
         <Card className="h-fit overflow-hidden pb-0">
-            <CardHeader className="gap-0">
-                <CardTitle>{title}</CardTitle>
-                <CardDescription>{description}</CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between gap-4">
+                <div>
+                    <CardTitle>{title}</CardTitle>
+                    <CardDescription>{description}</CardDescription>
+                </div>
+                <Sheet open={open} onOpenChange={setOpen}>
+                    <SheetTrigger asChild>
+                        <Button>
+                            <CirclePlus className="h-4 w-4" />
+                            Add New Transaction
+                        </Button>
+                    </SheetTrigger>
+
+                    <TransactionSheet
+                        form={createForm}
+                        onSubmit={handleCreateSubmit}
+                        title="Add New Transaction"
+                        submitLabel="Create"
+                        idPrefix="dashboard-create"
+                        customers={customers}
+                        services={services}
+                    />
+                </Sheet>
             </CardHeader>
             <CardContent className="p-0">
                 {transactions.length > 0 ? (
@@ -325,7 +406,7 @@ function TransactionTable({
                                             variant="secondary"
                                             className={
                                                 paymentStatusColors[
-                                                    transaction.payment_status
+                                                transaction.payment_status
                                                 ] || ''
                                             }
                                         >
@@ -338,7 +419,7 @@ function TransactionTable({
                                         <Badge
                                             className={
                                                 statusColors[
-                                                    transaction.status
+                                                transaction.status
                                                 ] || ''
                                             }
                                         >
@@ -466,7 +547,7 @@ function RevenueChartCard({ revenueChart }: { revenueChart: RevenueChart }) {
                                             );
                                             const transactionCount = Number(
                                                 item.payload?.[
-                                                    `${seriesKey}Transactions`
+                                                `${seriesKey}Transactions`
                                                 ] ?? 0,
                                             );
 
@@ -526,6 +607,8 @@ export default function Dashboard({
     summary,
     recentTransactions,
     revenueChart,
+    customers,
+    services,
 }: DashboardProps) {
     return (
         <>
@@ -567,6 +650,8 @@ export default function Dashboard({
                     description="5 latest transactions in the system."
                     emptyState="There are no recent transactions yet."
                     transactions={recentTransactions}
+                    customers={customers}
+                    services={services}
                 />
             </div>
         </>

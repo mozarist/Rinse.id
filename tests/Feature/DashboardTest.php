@@ -154,6 +154,10 @@ test('admins can visit the dashboard', function () {
             ->where('revenueChart.data.1.service-'.$dryCleaning->id.'Transactions', 1)
             ->where('revenueChart.data.1.service-'.$washAndFold->id, 75000)
             ->where('revenueChart.data.1.service-'.$washAndFold->id.'Transactions', 1)
+            ->has('customers', 3)
+            ->has('services', 2)
+            ->where('customers.0.user.name', $customers[0]->user->name)
+            ->where('services.0.service_name', 'Dry Cleaning')
         );
 });
 
