@@ -21,6 +21,7 @@ interface Props {
 	customers?: any[]
 	services?: any[]
 	isEdit?: boolean
+	paymentProofUrl?: string | null
 }
 
 export function TransactionSheet({
@@ -33,10 +34,41 @@ export function TransactionSheet({
 	customers = [],
 	services = [],
 	isEdit = false,
+	paymentProofUrl = null,
 }: Props) {
 	const prefix = idPrefix ? `${idPrefix}_` : ''
 	const selectedService = services.find(s => s.id === form.data.service_id)
 	const totalPrice = selectedService ? selectedService.price * (form.data.quantity || 0) : 0
+	const shouldShowPaymentProofField = form.data.payment_method === 'transfer' && form.data.payment_status === 'paid'
+	const [previewUrl, setPreviewUrl] = React.useState<string | null>(paymentProofUrl)
+
+	React.useEffect(() => {
+		if (!shouldShowPaymentProofField) {
+			setPreviewUrl(null)
+			if (form.data.payment_proof !== null) {
+				form.setData('payment_proof', null)
+			}
+			return
+		}
+
+		if (form.data.payment_proof instanceof File) {
+			const objectUrl = URL.createObjectURL(form.data.payment_proof)
+			setPreviewUrl(objectUrl)
+
+			return () => {
+				URL.revokeObjectURL(objectUrl)
+			}
+		}
+
+		setPreviewUrl(paymentProofUrl)
+	}, [form, paymentProofUrl, shouldShowPaymentProofField, form.data.payment_proof])
+
+	function handlePaymentProofChange(event: React.ChangeEvent<HTMLInputElement>) {
+		const file = event.target.files?.[0] ?? null
+
+		form.setData('payment_proof', file)
+		event.target.value = ''
+	}
 
 	return (
 		<SheetContent side="right" className="max-w-md">
@@ -44,7 +76,7 @@ export function TransactionSheet({
 				<SheetTitle>{title}</SheetTitle>
 			</SheetHeader>
 
-			<form onSubmit={onSubmit} className="flex h-full w-full flex-col justify-between overflow-hidden">
+			<form onSubmit={onSubmit} encType="multipart/form-data" className="flex h-full w-full flex-col justify-between overflow-hidden">
 				<div className="flex-1 overflow-y-auto space-y-4 px-6 scrollbar-none">
 					<div className='space-y-2'>
 						<Label htmlFor={`${prefix}customer_id`}>Customer</Label>
@@ -55,7 +87,7 @@ export function TransactionSheet({
 							<SelectContent>
 								{customers.map((customer) => (
 									<SelectItem key={customer.id} value={String(customer.id)}>
-										{customer.user?.name || '-'}
+										{customer.user?.name || '-'} {customer.phone ? `(${customer.phone})` : ''}
 									</SelectItem>
 								))}
 							</SelectContent>
@@ -138,6 +170,31 @@ export function TransactionSheet({
 						</Select>
 						{form.errors.payment_status && <p className="mt-1 text-sm text-destructive">{form.errors.payment_status}</p>}
 					</div>
+
+					{shouldShowPaymentProofField && (
+						<div className="space-y-2">
+							<Label htmlFor={`${prefix}payment_proof`}>Payment Proof</Label>
+							<Input
+								id={`${prefix}payment_proof`}
+								name="payment_proof"
+								type="file"
+								accept="image/jpeg,image/png"
+								onChange={handlePaymentProofChange}
+								disabled={form.processing}
+							/>
+							{form.errors.payment_proof && <p className="mt-1 text-sm text-destructive">{form.errors.payment_proof}</p>}
+
+							{previewUrl && (
+								<div className="overflow-hidden rounded-2xl border">
+									<img
+										src={previewUrl}
+										alt="Payment proof preview"
+										className="h-fit w-full object-cover"
+									/>
+								</div>
+							)}
+						</div>
+					)}
 
 					{isEdit && (
 						<div className='space-y-2'>

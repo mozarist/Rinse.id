@@ -48,6 +48,7 @@ interface Transaction {
     total_price: number;
     payment_method: string;
     payment_status: string;
+    payment_proof: string | null;
     status: string;
     customer: {
         id: number;
@@ -77,6 +78,7 @@ interface TransactionFormData {
     payment_method: string;
     payment_status: string;
     status: string;
+    payment_proof: File | null;
 }
 
 const initialFormData: TransactionFormData = {
@@ -86,6 +88,7 @@ const initialFormData: TransactionFormData = {
     payment_method: '',
     payment_status: 'pending',
     status: 'antrian',
+    payment_proof: null,
 };
 
 const statusColors: { [key: string]: string } = {
@@ -131,6 +134,7 @@ export default function Index({
         e.preventDefault();
 
         createForm.post(store.url(), {
+            forceFormData: true,
             onSuccess: () => {
                 toast.success('Transaction successfully created.');
                 createForm.reset();
@@ -150,6 +154,7 @@ export default function Index({
         editForm.setData('payment_method', transaction.payment_method);
         editForm.setData('payment_status', transaction.payment_status);
         editForm.setData('status', transaction.status);
+        editForm.setData('payment_proof', null);
         setEditOpen(true);
     }
 
@@ -181,6 +186,7 @@ export default function Index({
 
     function handleUpdateTransaction(transaction: Transaction) {
         editForm.put(update.url(transaction.id), {
+            forceFormData: true,
             onSuccess: () => {
                 toast.success('Transaction successfully updated.');
                 setConfirmOpen(false);
@@ -379,6 +385,7 @@ export default function Index({
                         customers={customers}
                         services={services}
                         isEdit
+                        paymentProofUrl={editingTransaction?.payment_proof ? `/storage/${editingTransaction.payment_proof}` : null}
                     />
                 </Sheet>
 
