@@ -2,6 +2,7 @@ import { Head, Link, router, useForm } from '@inertiajs/react';
 import {
     CirclePlus,
     Ellipsis,
+    Eye,
     PenSquare,
     PlusCircle,
     Trash2,
@@ -28,6 +29,7 @@ import {
     DropdownMenuItem,
 } from '@/components/ui/dropdown-menu';
 import { Sheet, SheetTrigger } from '@/components/ui/sheet';
+import TransactionDetailsSheet from '@/components/ui/sheets/TransactionDetailsSheet';
 import TransactionSheet from '@/components/ui/sheets/TransactionSheet';
 import {
     Table,
@@ -42,6 +44,7 @@ import { destroy, index, store, update } from '@/routes/transactions';
 interface Transaction {
     id: number;
     invoice_code: string;
+    created_at: string;
     customer_id: number;
     service_id: number;
     quantity: number;
@@ -52,6 +55,8 @@ interface Transaction {
     status: string;
     customer: {
         id: number;
+        phone: string | null;
+        address: string | null;
         user: {
             id: number;
             name: string;
@@ -62,6 +67,10 @@ interface Transaction {
         service_name: string;
         unit: string;
         price: number;
+    };
+    admin: {
+        id: number;
+        name: string;
     };
 }
 
@@ -122,7 +131,9 @@ export default function Index({
 }) {
     const [open, setOpen] = useState(false);
     const [editOpen, setEditOpen] = useState(false);
+    const [detailsOpen, setDetailsOpen] = useState(false);
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+    const [viewingTransaction, setViewingTransaction] = useState<Transaction | null>(null);
     const [confirmOpen, setConfirmOpen] = useState(false);
     const [confirmAction, setConfirmAction] = useState<'edit' | 'delete' | null>(null);
     const [pendingTransaction, setPendingTransaction] = useState<Transaction | null>(null);
@@ -156,6 +167,11 @@ export default function Index({
         editForm.setData('status', transaction.status);
         editForm.setData('payment_proof', null);
         setEditOpen(true);
+    }
+
+    function openDetails(transaction: Transaction) {
+        setViewingTransaction(transaction);
+        setDetailsOpen(true);
     }
 
     function handleEditSubmit(e: React.FormEvent) {
@@ -295,6 +311,14 @@ export default function Index({
                                                 <DropdownMenuContent align="end">
                                                     <DropdownMenuItem
                                                         onClick={() =>
+                                                            openDetails(transaction)
+                                                        }
+                                                    >
+                                                        <Eye className="h-4 w-4" />
+                                                        View Details
+                                                    </DropdownMenuItem>
+                                                    <DropdownMenuItem
+                                                        onClick={() =>
                                                             openEdit(transaction)
                                                         }
                                                     >
@@ -387,6 +411,19 @@ export default function Index({
                         isEdit
                         paymentProofUrl={editingTransaction?.payment_proof ? `/storage/${editingTransaction.payment_proof}` : null}
                     />
+                </Sheet>
+
+                <Sheet
+                    open={detailsOpen}
+                    onOpenChange={(openState) => {
+                        setDetailsOpen(openState);
+
+                        if (!openState) {
+                            setViewingTransaction(null);
+                        }
+                    }}
+                >
+                    <TransactionDetailsSheet transaction={viewingTransaction} />
                 </Sheet>
 
                 {/* Confirmation dialog for edit/delete */}

@@ -87,7 +87,7 @@ export function TransactionSheet({
 							<SelectContent>
 								{customers.map((customer) => (
 									<SelectItem key={customer.id} value={String(customer.id)}>
-										{customer.user?.name || '-'} {customer.phone ? `(${customer.phone})` : ''}
+										{customer.user?.name || '-'}{customer.phone ? ` \u2014 ${customer.phone}` : ''}
 									</SelectItem>
 								))}
 							</SelectContent>
