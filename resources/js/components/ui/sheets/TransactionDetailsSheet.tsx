@@ -1,6 +1,6 @@
 import { SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
-import { Card } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface TransactionDetailsSheetProps {
     transaction: {
@@ -49,7 +49,7 @@ function DetailRow({ label, value }: { label: string; value: React.ReactNode }) 
     return (
         <div className="space-y-1">
             <p className="text-sm text-muted-foreground">{label}</p>
-            <div className="text-sm font-medium text-foreground">{value}</div>
+            <div className="text-sm font-medium text-foreground capitalize">{value}</div>
         </div>
     );
 }
@@ -63,89 +63,100 @@ export function TransactionDetailsSheet({ transaction }: TransactionDetailsSheet
 
             {transaction ? (
                 <div className="space-y-4 px-6 pb-6">
-                    <Card className="space-y-4 p-4">
-                        <div className="space-y-1">
-                            <p className="text-sm text-muted-foreground">Transaction Info</p>
-                            <h3 className="text-base font-semibold">{transaction.invoice_code}</h3>
-                        </div>
+                    <Card className="gap-4 py-4">
+                        <CardHeader className="px-4">
+                            <div>
+                                <h3 className="text-base font-semibold">{transaction.invoice_code}</h3>
+                                {formatDate(transaction.created_at)}
+                            </div>
+                        </CardHeader>
 
                         <Separator />
 
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <DetailRow label="Invoice Code" value={transaction.invoice_code} />
-                            <DetailRow label="Created At" value={formatDate(transaction.created_at)} />
-                            <DetailRow label="Quantity" value={transaction.quantity} />
-                            <DetailRow label="Total Price" value={formatCurrency(transaction.total_price)} />
-                        </div>
+                        <CardContent className="px-4">
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <DetailRow label="Quantity" value={transaction.quantity} />
+                                <DetailRow label="Total Price" value={formatCurrency(transaction.total_price)} />
+                            </div>
+                        </CardContent>
                     </Card>
 
-                    <Card className="space-y-4 p-4">
-                        <div className="space-y-1">
-                            <p className="text-sm text-muted-foreground">Customer Info</p>
-                        </div>
+                    <Card className="gap-4 py-4">
+                        <CardHeader className="px-4">
+                            <CardTitle>Customer Info</CardTitle>
+                        </CardHeader>
 
                         <Separator />
 
-                        <div className="grid grid-cols-1 gap-4">
-                            <DetailRow label="Customer Name" value={transaction.customer?.user?.name ?? '-'} />
-                            <DetailRow label="Phone Number" value={transaction.customer?.phone ?? '-'} />
-                            <DetailRow label="Address" value={transaction.customer?.address ?? '-'} />
-                        </div>
+                        <CardContent className="px-4">
+                            <div className="grid grid-cols-1 gap-2">
+                                <DetailRow label="Customer Name" value={transaction.customer?.user?.name ?? '-'} />
+                                <DetailRow label="Phone Number" value={transaction.customer?.phone ?? '-'} />
+                                <DetailRow label="Address" value={transaction.customer?.address ?? '-'} />
+                            </div>
+                        </CardContent>
                     </Card>
 
-                    <Card className="space-y-4 p-4">
-                        <div className="space-y-1">
-                            <p className="text-sm text-muted-foreground">Service Info</p>
-                        </div>
+                    <Card className="gap-4 py-4">
+                        <CardHeader className="px-4">
+                            <CardTitle>Service Info</CardTitle>
+                        </CardHeader>
 
                         <Separator />
 
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <DetailRow label="Service Name" value={transaction.service?.service_name ?? '-'} />
-                            <DetailRow label="Service Price" value={transaction.service?.price !== undefined ? formatCurrency(transaction.service.price) : '-'} />
-                            <DetailRow label="Service Unit" value={transaction.service?.unit ?? '-'} />
-                        </div>
+                        <CardContent className="px-4">
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <DetailRow label="Service Name" value={transaction.service?.service_name ?? '-'} />
+                                <DetailRow label={`Service Price/${transaction.service?.unit ?? '-'}`} value={transaction.service?.price !== undefined ? formatCurrency(transaction.service.price) : '-'} />
+                            </div>
+                        </CardContent>
                     </Card>
 
-                    <Card className="space-y-4 p-4">
-                        <div className="space-y-1">
-                            <p className="text-sm text-muted-foreground">Payment Info</p>
-                        </div>
+                    <Card className="gap-4 py-4">
+                        <CardHeader className="px-4">
+                            <CardTitle>Payment Info</CardTitle>
+                        </CardHeader>
 
                         <Separator />
 
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <DetailRow label="Payment Method" value={transaction.payment_method || '-'} />
-                            <DetailRow label="Payment Status" value={transaction.payment_status || '-'} />
-                        </div>
+                        <CardContent className="px-4 flex flex-col gap-4">
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <DetailRow label="Payment Method" value={transaction.payment_method || '-'} />
+                                <DetailRow label="Payment Status" value={transaction.payment_status || '-'} />
+                            </div>
 
-                        <div className="space-y-2">
-                            <p className="text-sm text-muted-foreground">Payment Proof</p>
-                            {transaction.payment_proof ? (
-                                <div className="overflow-hidden rounded-2xl border bg-muted">
-                                    <img
-                                        src={`/storage/${transaction.payment_proof}`}
-                                        alt="Payment proof"
-                                        className="h-auto w-full object-contain"
-                                    />
+                            {transaction.payment_proof && (
+                                <div className="space-y-2">
+                                    <p className="text-sm text-muted-foreground">Payment Proof</p>
+                                    {transaction.payment_proof ? (
+                                        <div className="overflow-hidden rounded-2xl border bg-muted">
+                                            <img
+                                                src={`/storage/${transaction.payment_proof}`}
+                                                alt="Payment proof"
+                                                className="h-fit w-full object-contain"
+                                            />
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-muted-foreground">No payment proof uploaded</p>
+                                    )}
                                 </div>
-                            ) : (
-                                <p className="text-sm text-muted-foreground">No payment proof uploaded</p>
                             )}
-                        </div>
+                        </CardContent>
                     </Card>
 
-                    <Card className="space-y-4 p-4">
-                        <div className="space-y-1">
-                            <p className="text-sm text-muted-foreground">Status Info</p>
-                        </div>
+                    <Card className="gap-4 py-4">
+                        <CardHeader className="px-4">
+                            <CardTitle>Status Info</CardTitle>
+                        </CardHeader>
 
                         <Separator />
 
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            <DetailRow label="Transaction Status" value={transaction.status || '-'} />
-                            <DetailRow label="Admin" value={transaction.admin?.name ?? '-'} />
-                        </div>
+                        <CardContent className="px-4">
+                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                <DetailRow label="Transaction Status" value={transaction.status || '-'} />
+                                <DetailRow label="Admin" value={transaction.admin?.name ?? '-'} />
+                            </div>
+                        </CardContent>
                     </Card>
                 </div>
             ) : (
