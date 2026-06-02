@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Transactions;
 use Illuminate\Http\Request;
 
 class TransactionController extends Controller
@@ -10,10 +11,22 @@ class TransactionController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
+        $transactions =
+            Transactions::with([
+                'service',
+                'customer.user'
+            ])
+                ->where(
+                    'customer_id',
+                    $request->user()->customer->id
+                )
+                ->latest()
+                ->get();
+
         return response()->json([
-            'message' => 'List of transactions.',
+            'data' => $transactions
         ]);
     }
 
@@ -28,9 +41,20 @@ class TransactionController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
-    {
-        //
+    public function show(Request $request, Transactions $transaction) {
+        if (
+            $transaction->customer_id !==
+            $request->user()->customer->id
+        ) {
+            abort(403);
+        }
+
+        return response()->json([
+            'data' => $transaction->load([
+                'service',
+                'customer.user'
+            ]),
+        ]);
     }
 
     /**
