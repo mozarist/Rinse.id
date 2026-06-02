@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\TransactionController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -21,10 +23,10 @@ Route::middleware(['auth:sanctum', 'role:admin'])->prefix('admin')->group(functi
     ]));
 });
 
-Route::middleware(['auth:sanctum', 'role:customer'])->prefix('customer')->group(function () {
+Route::apiResource('transaksi', TransactionController::class);
+Route::post('/login', [AuthController::class, 'login']);
+
+Route::middleware(['auth:sanctum', 'role:customer'])->group(function () {
     Route::get('/me', fn (Request $request) => $request->user());
 
-    Route::get('/transactions', fn () => response()->json([
-        'message' => 'Customer API access granted.',
-    ]));
 });
