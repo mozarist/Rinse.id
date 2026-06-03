@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class AuthController extends Controller
+class AuthController extends ApiController
 {
     public function login(Request $request)
     {
@@ -16,31 +15,30 @@ class AuthController extends Controller
             'password' => ['required'],
         ]);
 
-        if (!Auth::attempt($credentials)) {
-            return response()->json([
-                'message' => 'Invalid credentials'
-            ], 401);
+        if (! Auth::attempt($credentials)) {
+            return $this->error('Invalid credentials', 401);
         }
 
+        /** @var User $user */
         $user = Auth::user();
-
         $token = $user->createToken('mobile')->plainTextToken;
 
-        return response()->json([
+        return $this->success([
             'token' => $token,
-            'user' => $user,
+            'user' => $user->load('customer'),
         ]);
     }
 
     public function logout(Request $request)
     {
-        $request
-            ->user()
-            ->currentAccessToken()
-            ->delete();
+        $token = $request->user()->currentAccessToken();
 
-        return response()->json([
-            'message' => 'Logged out'
+        if ($token) {
+            $token->delete();
+        }
+
+        return $this->success([
+            'message' => 'Logged out',
         ]);
     }
 }

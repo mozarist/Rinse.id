@@ -2,32 +2,29 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
 use App\Models\Transactions;
 use Illuminate\Http\Request;
 
-class TransactionController extends Controller
+class TransactionController extends ApiController
 {
     /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
     {
-        $transactions =
-            Transactions::with([
-                'service',
-                'customer.user'
-            ])
-                ->where(
-                    'customer_id',
-                    $request->user()->customer->id
-                )
-                ->latest()
-                ->get();
+        $customer = $request->user()->customer;
 
-        return response()->json([
-            'data' => $transactions
-        ]);
+        if (! $customer) {
+            return $this->error('Authenticated customer not found.', 404);
+        }
+
+        $transactions = $customer
+            ->transactions()
+            ->with('service')
+            ->latest()
+            ->get();
+
+        return $this->success($transactions);
     }
 
     /**
@@ -41,20 +38,22 @@ class TransactionController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(Request $request, Transactions $transaction) {
-        if (
-            $transaction->customer_id !==
-            $request->user()->customer->id
-        ) {
-            abort(403);
+    public function show(Request $request, Transactions $transaction)
+    {
+        $customer = $request->user()->customer;
+
+        if (! $customer) {
+            return $this->error('Authenticated customer not found.', 404);
         }
 
-        return response()->json([
-            'data' => $transaction->load([
-                'service',
-                'customer.user'
-            ]),
-        ]);
+        if ($transaction->customer_id !== $customer->id) {
+            return $this->error('Transaction does not belong to authenticated customer.', 403);
+        }
+
+        return $this->success($transaction->load([
+            'service',
+            'customer.user',
+        ]));
     }
 
     /**

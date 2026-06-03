@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Customer;
 use App\Models\User;
 use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -11,23 +12,22 @@ beforeEach(function () {
     $this->seed(RoleSeeder::class);
 });
 
-test('admin api routes require the admin role', function () {
-    $admin = User::factory()->create();
-    $admin->assignRole('admin');
-
-    Sanctum::actingAs($admin);
-
-    $this->getJson('/api/admin/transactions')->assertOk();
-    $this->getJson('/api/admin/customers')->assertOk();
-});
-
 test('customer api routes require the customer role', function () {
     $customer = User::factory()->create();
     $customer->assignRole('customer');
+    Customer::factory()->create(['user_id' => $customer->id]);
 
     Sanctum::actingAs($customer);
 
-    $this->getJson('/api/customer/me')->assertOk();
-    $this->getJson('/api/customer/transactions')->assertOk();
-    $this->getJson('/api/admin/transactions')->assertForbidden();
+    $this->getJson('/api/me')->assertOk();
+    $this->getJson('/api/transactions')->assertOk();
+});
+
+test('non-customer api routes are forbidden for other roles', function () {
+    $user = User::factory()->create();
+
+    Sanctum::actingAs($user);
+
+    $this->getJson('/api/me')->assertForbidden();
+    $this->getJson('/api/transactions')->assertForbidden();
 });

@@ -2,17 +2,22 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 
-class ProfileController extends Controller
+class ProfileController extends ApiController
 {
     public function me(Request $request)
-{
-    $user = $request->user()->load('customer');
+    {
+        $user = $request->user();
 
-    return response()->json([
-        'data' => $user,
-    ]);
-}
+        if (! $user->relationLoaded('customer')) {
+            $user->load('customer');
+        }
+
+        if (! $user->customer) {
+            return $this->error('Customer profile not found.', 404);
+        }
+
+        return $this->success($user);
+    }
 }
